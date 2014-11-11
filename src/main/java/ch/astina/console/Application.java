@@ -1,17 +1,33 @@
 package ch.astina.console;
 
 import ch.astina.console.command.Command;
+import ch.astina.console.command.HelpCommand;
+import ch.astina.console.command.ListCommand;
+import ch.astina.console.error.InvalidArgumentException;
+import ch.astina.console.error.LogicException;
 import ch.astina.console.input.*;
-import ch.astina.console.output.Output;
+import ch.astina.console.output.*;
+import ch.astina.console.util.StringUtils;
+import ch.astina.console.util.ThrowableUtils;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
 
 public class Application
 {
+    private Map<String, Command> commands = new HashMap<String, Command>();
     private boolean wantHelps;
     private String name;
     private String version;
     private InputDefinition definition;
     private boolean autoExit = true;
     private String defaultCommand;
+    private boolean catchExceptions = true;
+    private Command runningCommand;
+    private Command[] defaultCommands;
+    private int[] terminalDimensions;
 
     public Application()
     {
@@ -25,15 +41,24 @@ public class Application
         this.defaultCommand = "list";
         this.definition = getDefaultInputDefinition();
 
-
+        for (Command command : getDefaultCommands()) {
+            add(command);
+        }
     }
 
     public static void main(String[] args)
     {
-        (new Application()).run(new ArgvInput(args), null);
+        int exitCode = (new Application()).run(args);
+
+        System.exit(exitCode);
     }
 
-    public void run(Input input, Output output)
+    public int run(String[] args)
+    {
+        return run(new ArgvInput(args), new SystemOutput());
+    }
+
+    public int run(Input input, Output output)
     {
         configureIO(input, output);
 
@@ -42,11 +67,43 @@ public class Application
         try {
             exitCode = doRun(input, output);
         } catch (Exception e) {
+            if (!catchExceptions) {
+                throw new RuntimeException(e);
+            }
 
+            if (output instanceof ConsoleOutput) {
+                renderException(e, ((ConsoleOutput) output).getErrorOutput());
+            } else {
+                renderException(e, output);
+            }
+
+            exitCode = 1;
+        }
+
+        if (autoExit) {
+            if (exitCode > 255) {
+                exitCode = 255;
+            }
+
+            System.exit(exitCode);
+        }
+
+        return exitCode;
+    }
+
+    private void renderException(Throwable error, Output output)
+    {
+        String title = String.format("%s  [%s]  ", error.getMessage(), error.getClass());
+        output.writeln(title);
+        output.writeln("");
+
+        if (output.getVerbosity().ordinal() >= Verbosity.VERBOSE.ordinal()) {
+            output.writeln("<comment>Exception trace:</comment>");
+            output.writeln(ThrowableUtils.getThrowableAsString(error));
         }
     }
 
-    private int doRun(Input input, Output output)
+    protected int doRun(Input input, Output output)
     {
         if (input.hasParameterOption("--version", "-V")) {
             output.writeln(getLongVersion());
@@ -58,7 +115,7 @@ public class Application
         if (input.hasParameterOption("--help", "-h")) {
             if (name == null) {
                 name = "help";
-                // todo implement
+                input = new ArrayInput("command", "help");
             } else {
                 wantHelps = true;
             }
@@ -66,17 +123,56 @@ public class Application
 
         if (name == null) {
             name = defaultCommand;
-            // todo implement
+            input = new ArrayInput("command", defaultCommand);
         }
 
+        Command command = find(name);
 
+        runningCommand = command;
+        int exitCode = doRunCommand(command, input, output);
+        runningCommand = null;
 
-        return 0;
+        return exitCode;
+    }
+
+    protected int doRunCommand(Command command, Input input, Output output)
+    {
+        int exitCode;
+
+        try {
+            exitCode = command.run(input, output);
+        } catch (Exception e) {
+            // todo events
+            throw new RuntimeException(e);
+        }
+
+        return exitCode;
     }
 
     private void configureIO(Input input, Output output)
     {
-        // todo implement
+        if (input.hasParameterOption("--ansi")) {
+            output.setDecorated(true);
+        } else if (input.hasParameterOption("--no-ansi")) {
+            output.setDecorated(false);
+        }
+
+        if (input.hasParameterOption("--no-interaction", "-n")) {
+            input.setInteractive(false);
+        }
+        // todo implement posix isatty support
+
+        if (input.hasParameterOption("--quiet", "-q")) {
+            output.setVerbosity(Verbosity.QUIET);
+        } else {
+            if (input.hasParameterOption("-vvv") || input.hasParameterOption("--verbose=3") || input.getParameterOption("--verbose", "").equals("3")) {
+                output.setVerbosity(Verbosity.DEBUG);
+            } else if (input.hasParameterOption("-vv") || input.hasParameterOption("--verbose=2") || input.getParameterOption("--verbose", "").equals("2")) {
+                output.setVerbosity(Verbosity.VERY_VERBOSE);
+            } else if (input.hasParameterOption("-v") || input.hasParameterOption("--verbose=1") || input.getParameterOption("--verbose", "").equals("1")) {
+                output.setVerbosity(Verbosity.VERBOSE);
+            }
+        }
     }
 
     public String getName()
@@ -109,6 +205,35 @@ public class Application
         this.definition = definition;
     }
 
+    public String getHelp()
+    {
+        String nl = System.getProperty("line.separator");
+
+        StringBuilder sb = new StringBuilder();
+        sb
+            .append(getLongVersion())
+            .append(nl)
+            .append(nl)
+            .append("<comment>Usage:</comment>")
+            .append(nl)
+            .append(" [options] command [arguments]")
+            .append(nl)
+            .append(nl)
+            .append("<comment>Options:</comment>")
+            .append(nl)
+        ;
+
+        for (InputOption option : definition.getOptions()) {
+            sb.append(String.format("  %-29s %s %s",
+                    "<info>--" + option.getName() + "</info>",
+                    option.getShortcut() == null ? "  " : "<info>-" + option.getShortcut() + "</info>",
+                    option.getDescription())
+            ).append(nl);
+        }
+
+        return sb.toString();
+    }
+
     public String getLongVersion()
     {
         if (!getName().equals("UNKNOWN") && !getVersion().equals("UNKNOWN")) {
@@ -118,9 +243,86 @@ public class Application
         return "<info>Console Tool</info>";
     }
 
+    /**
+     * Adds a command object.
+     *
+     * If a command with the same name already exists, it will be overridden.
+     */
+    public void add(Command command)
+    {
+        command.setApplication(this);
+
+        if (!command.isEnabled()) {
+            command.setApplication(null);
+            return;
+        }
+
+        if (command.getDefinition() == null) {
+            throw new LogicException(String.format("Command class '%s' is not correctly initialized. You probably forgot to call the super constructor.", command.getClass()));
+        }
+
+        commands.put(command.getName(), command);
+
+        // todo aliases
+    }
+
     public Command find(String name)
     {
-        return null;
+        return get(name);
+    }
+
+    public Map<String, Command> all()
+    {
+        return commands;
+    }
+
+    public Map<String, Command> all(String namespace)
+    {
+        Map<String, Command> commands = new HashMap<String, Command>();
+
+        for (Command command : this.commands.values()) {
+            if (namespace.equals(extractNamespace(command.getName(), StringUtils.count(namespace, ':') + 1))) {
+                commands.put(command.getName(), command);
+            }
+        }
+
+        return commands;
+    }
+
+    public String extractNamespace(String name, Integer limit)
+    {
+        List<String> parts = new ArrayList<String>(Arrays.asList(name.split(":")));
+        parts.remove(parts.size() - 1);
+
+        if (parts.size() == 0) {
+            return "";
+        }
+
+        if (limit != null && parts.size() > limit) {
+            parts = parts.subList(0, limit);
+        }
+
+        return StringUtils.join(parts.toArray(new String[parts.size()]), ":");
+    }
+
+    private Command get(String name)
+    {
+        if (!commands.containsKey(name)) {
+            throw new InvalidArgumentException(String.format("The command '%s' does not exist.", name));
+        }
+
+        Command command = commands.get(name);
+
+        if (wantHelps) {
+            wantHelps = false;
+
+            HelpCommand helpCommand = (HelpCommand) get("help");
+            helpCommand.setCommand(command);
+
+            return helpCommand;
+        }
+
+        return command;
     }
 
     private String getCommandName(Input input)
@@ -132,8 +334,8 @@ public class Application
     {
         InputDefinition definition = new InputDefinition();
         definition.addArgument(new InputArgument("command", InputArgument.REQUIRED, "The command to execute"));
-        definition.addOption(new InputOption("--help", "h", InputOption.VALUE_NONE, "Display this help message."));
-        definition.addOption(new InputOption("--quiet", "q", InputOption.VALUE_NONE, "Do not output any message."));
+        definition.addOption(new InputOption("--help", "-h", InputOption.VALUE_NONE, "Display this help message."));
+        definition.addOption(new InputOption("--quiet", "-q", InputOption.VALUE_NONE, "Do not output any message."));
         definition.addOption(new InputOption("--verbose", "-v|vv|vvv", InputOption.VALUE_NONE, "Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug."));
         definition.addOption(new InputOption("--version", "-V", InputOption.VALUE_NONE, "Display this application version."));
         definition.addOption(new InputOption("--ansi", null, InputOption.VALUE_NONE, "Force ANSI output."));
@@ -141,5 +343,50 @@ public class Application
         definition.addOption(new InputOption("--no-interaction", "-n", InputOption.VALUE_NONE, "Do not ask any interactive question."));
 
         return definition;
+    }
+
+    public Command[] getDefaultCommands()
+    {
+        Command[] commands = new Command[2];
+        commands[0] = new HelpCommand();
+        commands[1] = new ListCommand();
+
+        return commands;
+    }
+
+    public int[] getTerminalDimensions()
+    {
+        if (terminalDimensions != null) {
+            return terminalDimensions;
+        }
+
+//        String sttyString = getSttyColumns();
+
+        return new int[] {80, 120};
+    }
+
+    public String getSttyColumns()
+    {
+        // todo make this work
+
+        String sttyColumns = null;
+        try {
+            ProcessBuilder builder = new ProcessBuilder("/bin/bash", "stty", "-a");
+            Process process = builder.start();
+            StringBuilder out = new StringBuilder();
+            BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line, previous = null;
+            while ((line = br.readLine()) != null) {
+                if (!line.equals(previous)) {
+                    previous = line;
+                    out.append(line).append('\n');
+                }
+            }
+            sttyColumns = out.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return sttyColumns;
     }
 }

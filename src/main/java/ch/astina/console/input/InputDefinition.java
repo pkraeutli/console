@@ -1,13 +1,13 @@
 package ch.astina.console.input;
 
-import ch.astina.console.InvalidArgumentException;
-import ch.astina.console.LogicException;
+import ch.astina.console.error.InvalidArgumentException;
+import ch.astina.console.error.LogicException;
 
 import java.util.*;
 
 public class InputDefinition
 {
-    private Map<String, InputArgument> arguments = new HashMap<String, InputArgument>();
+    private Map<String, InputArgument> arguments = new LinkedHashMap<String, InputArgument>();
 
     private int requiredCount;
 
@@ -26,16 +26,26 @@ public class InputDefinition
 
     private void resetArguments()
     {
-        arguments = new HashMap<String, InputArgument>();
+        arguments = new LinkedHashMap<String, InputArgument>();
         requiredCount = 0;
         hasAnArrayArgument = false;
         hasOptional = false;
+    }
+
+    public void setArguments(Collection<InputArgument> arguments)
+    {
+        setArguments(new ArrayList<>(arguments));
     }
 
     public void setArguments(List<InputArgument> arguments)
     {
         resetArguments();
         addArguments(arguments);
+    }
+
+    public void addArguments(Collection<InputArgument> arguments)
+    {
+        addArguments(new ArrayList<>(arguments));
     }
 
     public void addArguments(List<InputArgument> arguments)
@@ -113,7 +123,7 @@ public class InputDefinition
 
     public Map<String, String> getArgumentDefaults()
     {
-        HashMap<String, String> defaultValues = new HashMap<String, String>();
+        HashMap<String, String> defaultValues = new LinkedHashMap<String, String>();
         for (InputArgument argument : arguments.values()) {
             defaultValues.put(argument.getName(), argument.getDefaultValue());
         }
@@ -121,11 +131,21 @@ public class InputDefinition
         return defaultValues;
     }
 
+    public void setOptions(Collection<InputOption> options)
+    {
+        setOptions(new ArrayList<>(options));
+    }
+
     public void setOptions(List<InputOption> options)
     {
         this.options = new HashMap<String, InputOption>();
         this.shortcuts = new HashMap<String, String>();
         addOptions(options);
+    }
+
+    public void addOptions(Collection<InputOption> options)
+    {
+        addOptions(new ArrayList<>(options));
     }
 
     public void addOptions(List<InputOption> options)
@@ -142,13 +162,19 @@ public class InputDefinition
         }
 
         if (option.getShortcut() != null) {
-            // todo implement
+            for (String shortcut : option.getShortcut().split("\\|")) {
+                if (shortcuts.containsKey(shortcut) && !option.equals(options.get(shortcut))) {
+                    throw new LogicException(String.format("An option with shortcut '%s' already exists.", shortcut));
+                }
+            }
         }
 
         options.put(option.getName(), option);
 
         if (option.getShortcut() != null) {
-            shortcuts.put(option.getShortcut(), option.getName());
+            for (String shortcut : option.getShortcut().split("|")) {
+                shortcuts.put(shortcut, option.getName());
+            }
         }
     }
 

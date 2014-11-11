@@ -1,30 +1,22 @@
 package ch.astina.console.output;
 
+import ch.astina.console.formatter.OutputFormatter;
+
 public interface Output
 {
-    public static final int VERBOSITY_QUIET = 0;
-    public static final int VERBOSITY_NORMAL = 1;
-    public static final int VERBOSITY_VERBOSE = 2;
-    public static final int VERBOSITY_VERY_VERBOSE = 3;
-    public static final int VERBOSITY_DEBUG = 4;
-
-    public static final int OUTPUT_NORMAL = 0;
-    public static final int OUTPUT_RAW = 1;
-    public static final int OUTPUT_PLAIN = 2;
-
     public void write(String message);
 
     public void write(String message, boolean newline);
 
-    public void write(String message, boolean newline, String type);
+    public void write(String message, boolean newline, OutputType type);
 
     public void writeln(String message);
 
-    public void writeln(String message, String type);
+    public void writeln(String message, OutputType type);
 
-    public void setVerbosity(boolean level);
+    public void setVerbosity(Verbosity verbosity);
 
-    public int getVerbosity();
+    public Verbosity getVerbosity();
 
     public void setDecorated(boolean decorated);
 

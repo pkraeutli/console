@@ -1,7 +1,7 @@
 package ch.astina.console.input;
 
-import ch.astina.console.InvalidArgumentException;
-import ch.astina.console.LogicException;
+import ch.astina.console.error.InvalidArgumentException;
+import ch.astina.console.error.LogicException;
 
 public class InputArgument
 {

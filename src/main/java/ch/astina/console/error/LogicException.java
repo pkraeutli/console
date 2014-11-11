@@ -1,4 +1,4 @@
-package ch.astina.console;
+package ch.astina.console.error;
 
 public class LogicException extends RuntimeException
 {

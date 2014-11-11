@@ -11,7 +11,7 @@ public class ArgvInput extends AbstractInput
 
     public ArgvInput(String[] args)
     {
-        this(args, new InputDefinition());
+        this(args, null);
     }
 
     public ArgvInput(String[] args, InputDefinition definition)
@@ -21,15 +21,14 @@ public class ArgvInput extends AbstractInput
 
     public ArgvInput(List<String> args, InputDefinition definition)
     {
-        // remove the application name
-        if (args.size() > 0) {
-            args.remove(0);
-        }
-
         tokens = args;
 
-        bind(definition);
-        validate();
+        if (definition == null) {
+            this.definition = new InputDefinition();
+        } else {
+            bind(definition);
+            validate();
+        }
     }
 
     protected void setTokens(List<String> tokens)
@@ -215,6 +214,12 @@ public class ArgvInput extends AbstractInput
         return false;
     }
 
+    @Override
+    public String getParameterOption(String value)
+    {
+        return getParameterOption(value, null);
+    }
+
     /**
      * Returns the value of a raw option (not parsed).
      *
@@ -224,7 +229,7 @@ public class ArgvInput extends AbstractInput
     @Override
     public String getParameterOption(String value, String defaultValue)
     {
-        List<String> tokens = this.tokens;
+        List<String> tokens = new ArrayList<String>(this.tokens);
         int len = tokens.size();
         String token;
 

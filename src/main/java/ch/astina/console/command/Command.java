@@ -1,11 +1,17 @@
 package ch.astina.console.command;
 
 import ch.astina.console.Application;
-import ch.astina.console.InvalidArgumentException;
-import ch.astina.console.LogicException;
+import ch.astina.console.error.InvalidArgumentException;
+import ch.astina.console.error.LogicException;
 import ch.astina.console.input.Input;
+import ch.astina.console.input.InputArgument;
 import ch.astina.console.input.InputDefinition;
+import ch.astina.console.input.InputOption;
 import ch.astina.console.output.Output;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public abstract class Command
 {
@@ -16,21 +22,25 @@ public abstract class Command
     private String description;
     private boolean ignoreValidationErrors = false;
     private boolean applicationDefinitionMerged = false;
+    private boolean applicationDefinitionMergedWithArgs = false;
     private String synopsis;
 
     public Command()
     {
+        this(null);
     }
 
     public Command(String name)
     {
         definition = new InputDefinition();
 
-        setName(name);
+        if (name != null) {
+            setName(name);
+        }
 
         configure();
 
-        if (name == null || name.isEmpty()) {
+        if (this.name == null || this.name.isEmpty()) {
             throw new LogicException(String.format("The command defined in '%s' cannot have an empty name.", getClass()));
         }
     }
@@ -38,6 +48,11 @@ public abstract class Command
     public void ignoreValidationErrors()
     {
         ignoreValidationErrors = true;
+    }
+
+    public void setApplication(Application application)
+    {
+        this.application = application;
     }
 
     public Application getApplication()
@@ -114,9 +129,29 @@ public abstract class Command
         return execute(input, output);
     }
 
-    protected void mergeApplicationDefinition()
+    public void mergeApplicationDefinition()
     {
-        // todo implement
+        mergeApplicationDefinition(true);
+    }
+
+    public void mergeApplicationDefinition(boolean mergeArgs)
+    {
+        if (application == null || (applicationDefinitionMerged && (applicationDefinitionMergedWithArgs || !mergeArgs))) {
+            return;
+        }
+
+        if (mergeArgs) {
+            Collection<InputArgument> currentArguments = definition.getArguments();
+            definition.setArguments(application.getDefinition().getArguments());
+            definition.addArguments(currentArguments);
+        }
+
+        definition.addOptions(application.getDefinition().getOptions());
+
+        applicationDefinitionMerged = true;
+        if (mergeArgs) {
+            applicationDefinitionMergedWithArgs = true;
+        }
     }
 
     public Command setDefinition(InputDefinition definition)
@@ -131,6 +166,74 @@ public abstract class Command
     public InputDefinition getDefinition()
     {
         return definition;
+    }
+
+    public InputDefinition getNativeDefinition()
+    {
+        return getDefinition();
+    }
+
+    public Command addArgument(String name)
+    {
+        definition.addArgument(new InputArgument(name));
+
+        return this;
+    }
+
+    public Command addArgument(String name, int mode)
+    {
+        definition.addArgument(new InputArgument(name, mode));
+
+        return this;
+    }
+
+    public Command addArgument(String name, int mode, String description)
+    {
+        definition.addArgument(new InputArgument(name, mode, description));
+
+        return this;
+    }
+
+    public Command addArgument(String name, int mode, String description, String defaultValue)
+    {
+        definition.addArgument(new InputArgument(name, mode, description, defaultValue));
+
+        return this;
+    }
+
+    public Command addOption(String name)
+    {
+        definition.addOption(new InputOption(name));
+
+        return this;
+    }
+
+    public Command addOption(String name, String shortcut)
+    {
+        definition.addOption(new InputOption(name, shortcut));
+
+        return this;
+    }
+
+    public Command addOption(String name, String shortcut, int mode)
+    {
+        definition.addOption(new InputOption(name, shortcut, mode));
+
+        return this;
+    }
+
+    public Command addOption(String name, String shortcut, int mode, String description)
+    {
+        definition.addOption(new InputOption(name, shortcut, mode, description));
+
+        return this;
+    }
+
+    public Command addOption(String name, String shortcut, int mode, String description, String defaultValue)
+    {
+        definition.addOption(new InputOption(name, shortcut, mode, description, defaultValue));
+
+        return this;
     }
 
     public Command setName(String name)
@@ -171,7 +274,16 @@ public abstract class Command
         return help;
     }
 
-    private String getSynopsis()
+    public String getProcessedHelp()
+    {
+        String help = getHelp();
+
+        help = help.replaceAll("%command.name%", getName());
+
+        return help;
+    }
+
+    public String getSynopsis()
     {
         if (synopsis == null) {
             synopsis = String.format("%s %s", name, definition.getSynopsis()).trim();

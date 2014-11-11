@@ -1,12 +1,14 @@
 package ch.astina.console.input;
 
-import ch.astina.console.InvalidArgumentException;
+import ch.astina.console.error.InvalidArgumentException;
 
 public interface Input
 {
     public String getFirstArgument();
 
     public boolean hasParameterOption(String... values);
+
+    public String getParameterOption(String value);
 
     public String getParameterOption(String value, String defaultValue);
 

@@ -1,7 +1,8 @@
 package ch.astina.console.input;
 
-import ch.astina.console.InvalidArgumentException;
-import ch.astina.console.LogicException;
+import ch.astina.console.error.InvalidArgumentException;
+import ch.astina.console.error.LogicException;
+import ch.astina.console.util.StringUtils;
 
 public class InputOption
 {
@@ -48,6 +49,13 @@ public class InputOption
 
         if (shortcut != null && shortcut.isEmpty()) {
             shortcut = null;
+        }
+
+        if (shortcut != null) {
+            shortcut = StringUtils.ltrim(shortcut, '-');
+            if (shortcut.isEmpty()) {
+                throw new IllegalArgumentException("An option shortcut cannot be empty.");
+            }
         }
 
         if (mode > 15 || mode < 1) {

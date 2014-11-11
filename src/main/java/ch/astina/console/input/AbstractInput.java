@@ -1,6 +1,6 @@
 package ch.astina.console.input;
 
-import ch.astina.console.InvalidArgumentException;
+import ch.astina.console.error.InvalidArgumentException;
 
 import java.util.HashMap;
 import java.util.Map;
