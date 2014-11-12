@@ -3,6 +3,19 @@ Astina Console
 
 Java port of the famous [Symfony Console](http://symfony.com/doc/current/components/console/index.html).
 
+**Done**
+- Defining commands
+- Running commands
+- Basic interactions
+- Text output
+
+**Todo**
+- Array arguments
+- Interaction validation
+- Choice interactions
+- JSON, XML, ... output
+- Events
+
 ### Usage
 
 Create your command classes by extending the `ch.astina.console.Command` base class:
