@@ -24,8 +24,8 @@ public class TextDescriptor extends AbstractDescriptor
 
         writeText(String.format(" <info>%-" + nameWidth + "s</info> %s%s",
                 argument.getName(),
-                argument.getDescription().replace("\\n", "\\n" + StringUtils.repeat(" ", nameWidth + 2)),
-                defaultValue
+                argument.getDescription() == null ? "" : argument.getDescription().replace("\\n", "\\n" + StringUtils.repeat(" ", nameWidth + 2)),
+                defaultValue == null ? "" : defaultValue
         ), options);
     }
 

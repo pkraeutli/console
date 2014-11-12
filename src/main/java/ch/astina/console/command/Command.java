@@ -3,6 +3,8 @@ package ch.astina.console.command;
 import ch.astina.console.Application;
 import ch.astina.console.error.InvalidArgumentException;
 import ch.astina.console.error.LogicException;
+import ch.astina.console.helper.Helper;
+import ch.astina.console.helper.HelperSet;
 import ch.astina.console.input.Input;
 import ch.astina.console.input.InputArgument;
 import ch.astina.console.input.InputDefinition;
@@ -24,6 +26,7 @@ public abstract class Command
     private boolean applicationDefinitionMerged = false;
     private boolean applicationDefinitionMergedWithArgs = false;
     private String synopsis;
+    private HelperSet helperSet;
 
     public Command()
     {
@@ -53,11 +56,31 @@ public abstract class Command
     public void setApplication(Application application)
     {
         this.application = application;
+        if (application == null) {
+            setHelperSet(null);
+        } else {
+            setHelperSet(application.getHelperSet());
+        }
     }
 
     public Application getApplication()
     {
         return application;
+    }
+
+    public HelperSet getHelperSet()
+    {
+        return helperSet;
+    }
+
+    public void setHelperSet(HelperSet helperSet)
+    {
+        this.helperSet = helperSet;
+    }
+
+    public Helper getHelper(String name)
+    {
+        return helperSet.get(name);
     }
 
     /**
@@ -277,6 +300,9 @@ public abstract class Command
     public String getProcessedHelp()
     {
         String help = getHelp();
+        if (help == null) {
+            return "";
+        }
 
         help = help.replaceAll("%command.name%", getName());
 

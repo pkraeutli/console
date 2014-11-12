@@ -1,10 +1,13 @@
 package ch.astina.console;
 
 import ch.astina.console.command.Command;
+import ch.astina.console.command.GreetingCommand;
 import ch.astina.console.command.HelpCommand;
 import ch.astina.console.command.ListCommand;
 import ch.astina.console.error.InvalidArgumentException;
 import ch.astina.console.error.LogicException;
+import ch.astina.console.helper.HelperSet;
+import ch.astina.console.helper.QuestionHelper;
 import ch.astina.console.input.*;
 import ch.astina.console.output.*;
 import ch.astina.console.util.StringUtils;
@@ -28,6 +31,7 @@ public class Application
     private Command runningCommand;
     private Command[] defaultCommands;
     private int[] terminalDimensions;
+    private HelperSet helperSet;
 
     public Application()
     {
@@ -39,6 +43,7 @@ public class Application
         this.name = name;
         this.version = version;
         this.defaultCommand = "list";
+        this.helperSet = getDefaultHelperSet();
         this.definition = getDefaultInputDefinition();
 
         for (Command command : getDefaultCommands()) {
@@ -48,7 +53,9 @@ public class Application
 
     public static void main(String[] args)
     {
-        int exitCode = (new Application()).run(args);
+        Application app = new Application("Astina Console", "1.0.0-SNAPSHOT");
+        app.add(new GreetingCommand());
+        int exitCode = app.run(args);
 
         System.exit(exitCode);
     }
@@ -352,6 +359,24 @@ public class Application
         commands[1] = new ListCommand();
 
         return commands;
+    }
+
+    public HelperSet getHelperSet()
+    {
+        return helperSet;
+    }
+
+    public void setHelperSet(HelperSet helperSet)
+    {
+        this.helperSet = helperSet;
+    }
+
+    protected HelperSet getDefaultHelperSet()
+    {
+        HelperSet helperSet = new HelperSet();
+        helperSet.set(new QuestionHelper());
+
+        return helperSet;
     }
 
     public int[] getTerminalDimensions()
