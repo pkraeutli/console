@@ -163,7 +163,7 @@ public class InputDefinition
 
         if (option.getShortcut() != null) {
             for (String shortcut : option.getShortcut().split("\\|")) {
-                if (shortcuts.containsKey(shortcut) && !option.equals(options.get(shortcut))) {
+                if (shortcuts.containsKey(shortcut) && !option.equals(options.get(shortcuts.get(shortcut)))) {
                     throw new LogicException(String.format("An option with shortcut '%s' already exists.", shortcut));
                 }
             }

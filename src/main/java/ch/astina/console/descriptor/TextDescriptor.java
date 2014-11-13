@@ -99,7 +99,10 @@ public class TextDescriptor extends AbstractDescriptor
         writeText(" " + command.getSynopsis(), options);
         writeNewline();
 
-        // todo aliases
+        if (command.getAliases().length > 0) {
+            writeNewline();
+            writeText("<comment>Aliases:</comment> <info>" + StringUtils.join(command.getAliases(), ", ") + "</info>", options);
+        }
 
         InputDefinition definition = command.getNativeDefinition();
         if (definition != null) {

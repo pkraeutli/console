@@ -3,10 +3,7 @@ package ch.astina.console.formatter;
 import ch.astina.console.error.InvalidArgumentException;
 import ch.astina.console.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DefaultOutputFormatterStyle implements OutputFormatterStyle
 {
@@ -156,5 +153,29 @@ public class DefaultOutputFormatterStyle implements OutputFormatterStyle
                 text,
                 StringUtils.join(unsetCodes.toArray(new String[unsetCodes.size()]), ";")
         );
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (!(o instanceof DefaultOutputFormatterStyle)) return false;
+
+        DefaultOutputFormatterStyle that = (DefaultOutputFormatterStyle) o;
+
+        if (background != null ? !background.equals(that.background) : that.background != null) return false;
+        if (foreground != null ? !foreground.equals(that.foreground) : that.foreground != null) return false;
+        if (!Arrays.equals(options, that.options)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        int result = foreground != null ? foreground.hashCode() : 0;
+        result = 31 * result + (background != null ? background.hashCode() : 0);
+        result = 31 * result + (options != null ? Arrays.hashCode(options) : 0);
+        return result;
     }
 }

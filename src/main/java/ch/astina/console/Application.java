@@ -1,9 +1,6 @@
 package ch.astina.console;
 
-import ch.astina.console.command.Command;
-import ch.astina.console.command.GreetingCommand;
-import ch.astina.console.command.HelpCommand;
-import ch.astina.console.command.ListCommand;
+import ch.astina.console.command.*;
 import ch.astina.console.error.InvalidArgumentException;
 import ch.astina.console.error.LogicException;
 import ch.astina.console.helper.HelperSet;
@@ -55,6 +52,16 @@ public class Application
     {
         Application app = new Application("Astina Console", "1.0.0-SNAPSHOT");
         app.add(new GreetingCommand());
+        app.add((new Command("test")).setExecutor(new CommandExecutor()
+        {
+            @Override
+            public int execute(Input input, Output output)
+            {
+                output.writeln("<info>Prosim!</info>");
+
+                return 0;
+            }
+        }));
         int exitCode = app.run(args);
 
         System.exit(exitCode);
@@ -182,6 +189,16 @@ public class Application
         }
     }
 
+    public void setAutoExit(boolean autoExit)
+    {
+        this.autoExit = autoExit;
+    }
+
+    public void setCatchExceptions(boolean catchExceptions)
+    {
+        this.catchExceptions = catchExceptions;
+    }
+
     public String getName()
     {
         return name;
@@ -250,18 +267,30 @@ public class Application
         return "<info>Console Tool</info>";
     }
 
+    public Command register(String name)
+    {
+        return add(new Command(name));
+    }
+
+    public void addCommands(Command... commands)
+    {
+        for (Command command : commands) {
+            add(command);
+        }
+    }
+
     /**
      * Adds a command object.
      *
      * If a command with the same name already exists, it will be overridden.
      */
-    public void add(Command command)
+    public Command add(Command command)
     {
         command.setApplication(this);
 
         if (!command.isEnabled()) {
             command.setApplication(null);
-            return;
+            return null;
         }
 
         if (command.getDefinition() == null) {
@@ -270,7 +299,11 @@ public class Application
 
         commands.put(command.getName(), command);
 
-        // todo aliases
+        for (String alias : command.getAliases()) {
+            commands.put(alias, command);
+        }
+
+        return command;
     }
 
     public Command find(String name)
@@ -296,13 +329,18 @@ public class Application
         return commands;
     }
 
+    public String extractNamespace(String name)
+    {
+        return extractNamespace(name, null);
+    }
+
     public String extractNamespace(String name, Integer limit)
     {
         List<String> parts = new ArrayList<String>(Arrays.asList(name.split(":")));
         parts.remove(parts.size() - 1);
 
         if (parts.size() == 0) {
-            return "";
+            return null;
         }
 
         if (limit != null && parts.size() > limit) {
@@ -312,7 +350,7 @@ public class Application
         return StringUtils.join(parts.toArray(new String[parts.size()]), ":");
     }
 
-    private Command get(String name)
+    public Command get(String name)
     {
         if (!commands.containsKey(name)) {
             throw new InvalidArgumentException(String.format("The command '%s' does not exist.", name));
@@ -332,7 +370,33 @@ public class Application
         return command;
     }
 
-    private String getCommandName(Input input)
+    public boolean has(String name)
+    {
+        return commands.containsKey(name);
+    }
+
+    public String[] getNamespaces()
+    {
+        Set<String> namespaces = new HashSet<>();
+
+        String namespace;
+        for (Command command : commands.values()) {
+            namespace = extractNamespace(command.getName());
+            if (namespace != null) {
+                namespaces.add(namespace);
+            }
+            for (String alias : command.getAliases()) {
+                extractNamespace(alias);
+                if (namespace != null) {
+                    namespaces.add(namespace);
+                }
+            }
+        }
+
+        return namespaces.toArray(new String[namespaces.size()]);
+    }
+
+    protected String getCommandName(Input input)
     {
         return input.getFirstArgument();
     }

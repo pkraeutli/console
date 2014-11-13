@@ -11,14 +11,14 @@ import ch.astina.console.input.InputDefinition;
 import ch.astina.console.input.InputOption;
 import ch.astina.console.output.Output;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class Command
+public class Command
 {
     private Application application;
     private String name;
+    private String[] aliases = {};
     private InputDefinition definition;
     private String help;
     private String description;
@@ -27,6 +27,7 @@ public abstract class Command
     private boolean applicationDefinitionMergedWithArgs = false;
     private String synopsis;
     private HelperSet helperSet;
+    private CommandExecutor executor;
 
     public Command()
     {
@@ -103,8 +104,16 @@ public abstract class Command
 
     /**
      * Executes the current command.
+     *
+     * This method is not abstract because you can use this class
+     * as a concrete class. In this case, instead of defining the
+     * execute() method, you set the code to execute by passing
+     * a CommandExecutor to the setExecutor() method.
      */
-    protected abstract int execute(Input input, Output output);
+    protected int execute(Input input, Output output)
+    {
+        throw new LogicException("You must override the execute() method in the concrete command class.");
+    }
 
     /**
      * Interacts with the user.
@@ -149,7 +158,21 @@ public abstract class Command
 
         input.validate();
 
-        return execute(input, output);
+        int statusCode;
+        if (executor != null) {
+            statusCode = executor.execute(input, output);
+        } else {
+            statusCode = execute(input, output);
+        }
+
+        return statusCode;
+    }
+
+    public Command setExecutor(CommandExecutor executor)
+    {
+        this.executor = executor;
+
+        return this;
     }
 
     public void mergeApplicationDefinition()
@@ -307,6 +330,22 @@ public abstract class Command
         help = help.replaceAll("%command.name%", getName());
 
         return help;
+    }
+
+    public Command setAliases(String... aliases)
+    {
+        for (String alias : aliases) {
+            validateName(alias);
+        }
+
+        this.aliases = aliases;
+
+        return this;
+    }
+
+    public String[] getAliases()
+    {
+        return aliases;
     }
 
     public String getSynopsis()

@@ -18,7 +18,7 @@ Java port of the famous [Symfony Console](http://symfony.com/doc/current/compone
 
 ### Usage
 
-Create your command classes by extending the `ch.astina.console.Command` base class:
+Create your command classes by extending the `ch.astina.console.command.Command` base class:
 
 ```java
 import ch.astina.console.*;
@@ -59,6 +59,16 @@ public class Console
     {
         Application app = new Application();
         app.add(new FileListCommand());
+        app.add((new Command("foo")).setExecutor(new CommandExecutor()
+        {
+            @Override
+            public int execute(Input input, Output output)
+            {
+                output.writeln("<info>Bar!</info>");
+
+                return 0;
+            }
+        }));
 
         int exitCode = app.run(args);
 
