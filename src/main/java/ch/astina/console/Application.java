@@ -4,6 +4,7 @@ import ch.astina.console.command.*;
 import ch.astina.console.error.InvalidArgumentException;
 import ch.astina.console.error.LogicException;
 import ch.astina.console.helper.HelperSet;
+import ch.astina.console.helper.ProgressBar;
 import ch.astina.console.helper.QuestionHelper;
 import ch.astina.console.input.*;
 import ch.astina.console.output.*;
@@ -46,25 +47,6 @@ public class Application
         for (Command command : getDefaultCommands()) {
             add(command);
         }
-    }
-
-    public static void main(String[] args)
-    {
-        Application app = new Application("Astina Console", "1.0.0-SNAPSHOT");
-        app.add(new GreetingCommand());
-        app.add((new Command("test")).setExecutor(new CommandExecutor()
-        {
-            @Override
-            public int execute(Input input, Output output)
-            {
-                output.writeln("<info>Prosim!</info>");
-
-                return 0;
-            }
-        }));
-        int exitCode = app.run(args);
-
-        System.exit(exitCode);
     }
 
     public int run(String[] args)

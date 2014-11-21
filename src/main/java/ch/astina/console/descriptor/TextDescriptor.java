@@ -154,7 +154,7 @@ public class TextDescriptor extends AbstractDescriptor
 
                 for (String name : entry.getValue()) {
                     writeNewline();
-                    writeText(String.format("  <info>%-" + width + "s</info> %s", name, description.getCommand(name).getDescription()), options);
+                    writeText(String.format("  <info>%-" + width + "s</info> %s", name, description.getCommand(name).getDescription() == null ? "" : description.getCommand(name).getDescription()), options);
                 }
             }
 
