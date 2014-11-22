@@ -45,7 +45,7 @@ public abstract class AbstractHelper implements Helper
                 return timeFormat.getName();
             }
 
-            return Math.ceil(seconds / timeFormat.getDiv()) + " " + timeFormat.getName();
+            return (int) Math.ceil(seconds / timeFormat.getDiv()) + " " + timeFormat.getName();
         }
 
         return null;

@@ -18,7 +18,6 @@ public class Console
             @Override
             public int execute(Input input, Output output)
             {
-                output.writeln("<info>Prosim!</info>");
 
                 ProgressBar bar = new ProgressBar(output, 500);
                 for (int i = 0; i < 500; i++) {

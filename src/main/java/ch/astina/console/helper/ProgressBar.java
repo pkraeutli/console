@@ -399,7 +399,7 @@ public class ProgressBar
             @Override
             public String format(ProgressBar bar, Output output)
             {
-                return AbstractHelper.formatTime((new Date()).getTime() - bar.getStartTime().getTime());
+                return AbstractHelper.formatTime(Math.round(((new Date()).getTime() / 1000) - (bar.getStartTime().getTime() / 1000)));
             }
         });
 
@@ -416,7 +416,7 @@ public class ProgressBar
                 if (bar.getProgress() == 0) {
                     remaining = 0;
                 } else {
-                    remaining = Math.round((((new Date()).getTime() / 1000) - (bar.getStartTime().getTime() / 1000)) / bar.getProgress() * (bar.getMaxSteps() - bar.getProgress()));
+                    remaining = Math.round((float) ((new Date()).getTime() / 1000 - bar.getStartTime().getTime() / 1000) / (float) bar.getProgress() * ((float) bar.getMaxSteps() - (float) bar.getProgress()));
                 }
 
                 return AbstractHelper.formatTime(remaining);
@@ -436,7 +436,7 @@ public class ProgressBar
                 if (bar.getProgress() == 0) {
                     estimated = 0;
                 } else {
-                    estimated = Math.round(((new Date()).getTime() - bar.getStartTime().getTime()) / bar.getProgress() * bar.getMaxSteps());
+                    estimated = Math.round((float) ((new Date()).getTime() / 1000 - bar.getStartTime().getTime() / 1000) / (float) bar.getProgress() * (float) bar.getMaxSteps());
                 }
 
                 return AbstractHelper.formatTime(estimated);
@@ -448,7 +448,7 @@ public class ProgressBar
             @Override
             public String format(ProgressBar bar, Output output)
             {
-                return AbstractHelper.formatMemory(Runtime.getRuntime().maxMemory() - Runtime.getRuntime().freeMemory());
+                return AbstractHelper.formatMemory(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
             }
         });
 
