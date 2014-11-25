@@ -5,7 +5,6 @@ import ch.astina.console.input.Input;
 import ch.astina.console.output.Output;
 import ch.astina.console.output.StreamOutput;
 import ch.astina.console.output.Verbosity;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
