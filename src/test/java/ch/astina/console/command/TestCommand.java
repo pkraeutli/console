@@ -2,7 +2,9 @@ package ch.astina.console.command;
 
 import ch.astina.console.input.Input;
 import ch.astina.console.output.Output;
+import org.junit.Ignore;
 
+@Ignore
 public class TestCommand extends Command
 {
     @Override
