@@ -67,7 +67,7 @@
     <scm>
         <connection>scm:git:git@github.com:astina/console.git</connection>
         <developerConnection>scm:git:git@github.com:astina/console.git</developerConnection>
-        <url>git@github.com:astina/console.git</url>
+        <url>git://github.com/astina/console.git</url>
     </scm>
     
 </project>
