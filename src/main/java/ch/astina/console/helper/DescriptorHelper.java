@@ -1,5 +1,6 @@
 package ch.astina.console.helper;
 
+import ch.astina.console.descriptor.MarkdownDescriptor;
 import ch.astina.console.error.InvalidArgumentException;
 import ch.astina.console.descriptor.Descriptor;
 import ch.astina.console.descriptor.DescriptorOptions;
@@ -16,6 +17,7 @@ public class DescriptorHelper extends AbstractHelper
     public DescriptorHelper()
     {
         register("txt", new TextDescriptor());
+        register("md", new MarkdownDescriptor());
     }
 
     public void describe(Output output, Object object, DescriptorOptions options)
@@ -31,7 +33,7 @@ public class DescriptorHelper extends AbstractHelper
         descriptor.describe(output, object, options);
     }
 
-    private DescriptorHelper register(String format, TextDescriptor descriptor)
+    private DescriptorHelper register(String format, Descriptor descriptor)
     {
         descriptors.put(format, descriptor);
 
