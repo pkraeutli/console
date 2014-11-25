@@ -147,7 +147,7 @@ public class ArgvInput extends AbstractInput
             throw new RuntimeException(String.format("The '--%s' option does not accept a value.", name));
         }
 
-        if (value != null && option.acceptValue() && parsed.size() > 0) {
+        if (value == null && option.acceptValue() && parsed.size() > 0) {
             // if option accepts an optional or mandatory argument
             // let's see if there is one provided
             String next = parsed.remove(0);
