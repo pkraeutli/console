@@ -6,7 +6,7 @@
 
     <groupId>ch.astina</groupId>
     <artifactId>console</artifactId>
-    <version>1.0-0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
 
     <name>Astina Console</name>
     <description>Java port of the famous Symfony Console</description>
@@ -24,11 +24,13 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.11</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>1.9.5</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
