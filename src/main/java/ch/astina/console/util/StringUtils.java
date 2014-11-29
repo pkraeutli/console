@@ -105,4 +105,26 @@ public class StringUtils
 
         return s.split(String.valueOf(c));
     }
+
+    /**
+     * This String util method removes single or double quotes
+     * from a string if its quoted.
+     * for input string = "mystr1" output will be = mystr1
+     * for input string = 'mystr2' output will be = mystr2
+     *
+     * @param s value to be unquoted.
+     * @return value unquoted, null if input is null.
+     *
+     */
+    public static String unquote(String s)
+    {
+        if (s != null
+                && ((s.startsWith("\"") && s.endsWith("\""))
+                || (s.startsWith("'") && s.endsWith("'")))) {
+
+            s = s.substring(1, s.length() - 1);
+        }
+
+        return s;
+    }
 }
