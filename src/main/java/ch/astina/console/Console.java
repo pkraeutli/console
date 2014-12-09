@@ -5,7 +5,11 @@ import ch.astina.console.command.CommandExecutor;
 import ch.astina.console.command.GreetingCommand;
 import ch.astina.console.helper.ProgressBar;
 import ch.astina.console.input.Input;
+import ch.astina.console.input.StringInput;
 import ch.astina.console.output.Output;
+import ch.astina.console.output.SystemOutput;
+
+import java.util.Scanner;
 
 public class Console
 {
@@ -33,8 +37,18 @@ public class Console
                 return 0;
             }
         }));
-        int exitCode = app.run(args);
 
-        System.exit(exitCode);
+        app.run(args);
+
+//        app.setAutoExit(false);
+//        Scanner scanner = new Scanner(System.in);
+//        Output output = new SystemOutput();
+//
+//        while (true) {
+//            output.write("> ");
+//            String line = scanner.nextLine();
+//            app.run(new StringInput(line), output);
+//            output.write("\n\n");
+//        }
     }
 }

@@ -40,7 +40,7 @@ public class DefaultOutputFormatterStyle implements OutputFormatterStyle
 
     private OutputFormatterOption foreground;
     private OutputFormatterOption background;
-    private OutputFormatterOption[] options;
+    private List<OutputFormatterOption> options = new ArrayList<>();
 
     public DefaultOutputFormatterStyle()
     {
@@ -57,7 +57,7 @@ public class DefaultOutputFormatterStyle implements OutputFormatterStyle
         this(foreground, background, null);
     }
 
-    public DefaultOutputFormatterStyle(String foreground, String background, String[] options)
+    public DefaultOutputFormatterStyle(String foreground, String background, String... options)
     {
         if (foreground != null) {
             setForeground(foreground);
@@ -111,26 +111,44 @@ public class DefaultOutputFormatterStyle implements OutputFormatterStyle
     @Override
     public void setOption(String option)
     {
-        // todo implement
+        if (!availableOptions.containsKey(option)) {
+            throw new InvalidArgumentException(String.format("Invalid option specified: '%s'. Expected one of (%s)",
+                option, StringUtils.join(availableOptions.keySet().toArray(new String[availableOptions.size()]), ",")));
+        }
+
+        if (!options.contains(availableOptions.get(option))) {
+            options.add(availableOptions.get(option));
+        }
     }
 
     @Override
     public void unsetOption(String option)
     {
-        // todo implement
+        if (!availableOptions.containsKey(option)) {
+            throw new InvalidArgumentException(String.format("Invalid option specified: '%s'. Expected one of (%s)",
+                option, StringUtils.join(availableOptions.keySet().toArray(new String[availableOptions.size()]), ",")));
+        }
+
+        if (options.contains(availableOptions.get(option))) {
+            options.remove(availableOptions.get(option));
+        }
     }
 
     @Override
-    public void setOptions(String[] options)
+    public void setOptions(String... options)
     {
-        // todo implement
+        this.options = new ArrayList<>();
+
+        for (String option : options) {
+            setOption(option);
+        }
     }
 
     @Override
     public String apply(String text)
     {
-        List<String> setCodes = new ArrayList<String>();
-        List<String> unsetCodes = new ArrayList<String>();
+        List<String> setCodes = new ArrayList<>();
+        List<String> unsetCodes = new ArrayList<>();
 
         if (foreground != null) {
             setCodes.add(String.valueOf(foreground.getSet()));
@@ -141,7 +159,10 @@ public class DefaultOutputFormatterStyle implements OutputFormatterStyle
             unsetCodes.add(String.valueOf(background.getUnset()));
         }
 
-        // todo options
+        for (OutputFormatterOption option : options) {
+            setCodes.add(String.valueOf(option.getSet()));
+            unsetCodes.add(String.valueOf(option.getUnset()));
+        }
 
         if (setCodes.size() == 0) {
             return text;
@@ -165,7 +186,7 @@ public class DefaultOutputFormatterStyle implements OutputFormatterStyle
 
         if (background != null ? !background.equals(that.background) : that.background != null) return false;
         if (foreground != null ? !foreground.equals(that.foreground) : that.foreground != null) return false;
-        if (!Arrays.equals(options, that.options)) return false;
+        if (options != null ? !options.equals(that.options) : that.options != null) return false;
 
         return true;
     }
@@ -175,7 +196,7 @@ public class DefaultOutputFormatterStyle implements OutputFormatterStyle
     {
         int result = foreground != null ? foreground.hashCode() : 0;
         result = 31 * result + (background != null ? background.hashCode() : 0);
-        result = 31 * result + (options != null ? Arrays.hashCode(options) : 0);
+        result = 31 * result + (options != null ? options.hashCode() : 0);
         return result;
     }
 }

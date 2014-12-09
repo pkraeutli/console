@@ -21,4 +21,26 @@ public class OutputFormatterOption
     {
         return unset;
     }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (!(o instanceof OutputFormatterOption)) return false;
+
+        OutputFormatterOption that = (OutputFormatterOption) o;
+
+        if (set != that.set) return false;
+        if (unset != that.unset) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        int result = set;
+        result = 31 * result + unset;
+        return result;
+    }
 }

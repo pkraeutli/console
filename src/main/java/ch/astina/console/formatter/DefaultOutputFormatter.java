@@ -15,14 +15,27 @@ public class DefaultOutputFormatter implements OutputFormatter
 
     private OutputFormatterStyleStack styleStack;
 
+    public static final String TAG_REGEX = "[a-z][a-z0-9_=;-]*";
+
+    public static final Pattern TAG_PATTERN = Pattern.compile("<((" + TAG_REGEX + ")|/(" + TAG_REGEX + ")?)>", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+
+    public static final Pattern STYLE_PATTERN = Pattern.compile("([^=]+)=([^;]+)(;|$)");
+
     public static String escape(String text)
     {
-        return text.replaceAll("([^\\\\\\\\]?)<", "$1\\<");
+        Pattern pattern = Pattern.compile("([^\\\\\\\\]?)<", Pattern.DOTALL);
+
+        return pattern.matcher(text).replaceAll("$1\\\\<");
     }
 
     public DefaultOutputFormatter()
     {
-        this(false, new HashMap<String, OutputFormatterStyle>());
+        this(false);
+    }
+
+    public DefaultOutputFormatter(boolean decorated)
+    {
+        this(decorated, new HashMap<String, OutputFormatterStyle>());
     }
 
     public DefaultOutputFormatter(boolean decorated, Map<String, OutputFormatterStyle> styles)
@@ -83,12 +96,10 @@ public class DefaultOutputFormatter implements OutputFormatter
         int offset = 0;
         StringBuilder output = new StringBuilder();
 
-        String tagRegex = "[a-z][a-z0-9_=;-]*";
-        Pattern pattern = Pattern.compile("<((" + tagRegex + ")|/(" + tagRegex + ")?)>", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
-        Matcher matcher = pattern.matcher(message);
+        Matcher matcher = TAG_PATTERN.matcher(message);
 
-        boolean open = false;
-        String tag = "";
+        boolean open;
+        String tag;
         OutputFormatterStyle style;
         while (matcher.find()) {
             int pos = matcher.start();
@@ -106,7 +117,7 @@ public class DefaultOutputFormatter implements OutputFormatter
                 tag = matcher.group(3);
             }
 
-            if (!open && tag.isEmpty()) {
+            if (!open && (tag == null || tag.isEmpty())) {
                 // </>
                 styleStack.pop();
             } else if (pos > 0 && message.charAt(pos - 1) == '\\') {
@@ -114,17 +125,21 @@ public class DefaultOutputFormatter implements OutputFormatter
                 output.append(applyCurrentStyle(text));
             } else {
                 style = createStyleFromString(tag.toLowerCase());
-                if (open) {
-                    styleStack.push(style);
+                if (style == null) {
+                    output.append(applyCurrentStyle(text));
                 } else {
-                    styleStack.pop(style);
+                    if (open) {
+                        styleStack.push(style);
+                    } else {
+                        styleStack.pop(style);
+                    }
                 }
             }
         }
 
         output.append(applyCurrentStyle(message.substring(offset)));
 
-        return output.toString().replaceAll("\\<", "<");
+        return output.toString().replaceAll("\\\\<", "<");
     }
 
     private OutputFormatterStyle createStyleFromString(String string)
@@ -133,9 +148,31 @@ public class DefaultOutputFormatter implements OutputFormatter
             return styles.get(string);
         }
 
-        // todo implement fg=... bg=... stuff
+        Matcher matcher = STYLE_PATTERN.matcher(string.toLowerCase());
 
-        return null;
+        OutputFormatterStyle style = new DefaultOutputFormatterStyle();
+
+        String type;
+        while (matcher.find()) {
+            type = matcher.group(1);
+            switch (type) {
+                case "fg":
+                    style.setForeground(matcher.group(2));
+                    break;
+                case "bg":
+                    style.setBackground(matcher.group(2));
+                    break;
+                default:
+                    try {
+                        style.setOption(matcher.group(2));
+                    } catch (InvalidArgumentException e) {
+                        return null;
+                    }
+                    break;
+            }
+        }
+
+        return style;
     }
 
     private String applyCurrentStyle(String text)

@@ -10,7 +10,7 @@ public interface OutputFormatterStyle
 
     public void unsetOption(String option);
 
-    public void setOptions(String[] options);
+    public void setOptions(String... options);
 
     public String apply(String text);
 }
