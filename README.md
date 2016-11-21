@@ -3,6 +3,8 @@ Astina Console
 
 Java port of the famous [Symfony Console](http://symfony.com/doc/current/components/console/index.html).
 
+*Note*: This is just an experiment. For something production ready, check out [CRaSH](http://www.crashub.org/).
+
 **Done**
 - Defining commands
 - Running commands
